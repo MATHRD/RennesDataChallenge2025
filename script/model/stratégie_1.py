@@ -23,10 +23,10 @@ dataPerf= initial_dataset[['Security ISIN' , 'Implied Temperature Rise [Â°C]',
 dataPerf['Implied Temperature Rise [Â°C]']=dataPerf['Implied Temperature Rise [Â°C]'].fillna(2)
 
 # Paramètres 
-num_assets = len(dataPerf)  # Nombre d'actifs
+num_assets = len(dataPerf)  # Nbr d'actifs
 sol_per_pop = 500  # Taille de la population
-num_generations = 200  # Nombre de générations
-mutation_rate = 0.1  # Taux de mutation
+num_generations = 200  # Nbr de générations
+mutation_rate = 0.1  # Tx de mutation
 
 #Fitness value
 def fitness(solution):
