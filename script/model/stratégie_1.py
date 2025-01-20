@@ -18,26 +18,25 @@ engine = create_engine(connection_string)
 query = "SELECT * FROM initial_dataset"
 initial_dataset = pd.read_sql(query, engine)
 
+# Sélection des critères à maximiser/minimiser
 dataPerf= initial_dataset[['Security ISIN' , 'Implied Temperature Rise [Â°C]','Return_1Y', 'Sharpe_1Y']]
 dataPerf['Implied Temperature Rise [Â°C]']=dataPerf['Implied Temperature Rise [Â°C]'].fillna(2)
 
-# Définir les paramètres nécessaires
-num_assets = len(dataPerf)  # Nombre d'actifs dans le portefeuille
+# Paramètres 
+num_assets = len(dataPerf)  # Nombre d'actifs
 sol_per_pop = 500  # Taille de la population
 num_generations = 200  # Nombre de générations
 mutation_rate = 0.1  # Taux de mutation
-# Fonction de fitness mise à jour avec moyenne pondérée de la température
+
+#Fitness value
 def fitness(solution):
-    # Calcul du rendement et du Sharpe
     portfolio_return = np.dot(solution, dataPerf['Return_1Y'])
     portfolio_sharpe = np.dot(solution, dataPerf['Sharpe_1Y'])
     
-    # Calcul de la température implicite moyenne pondérée
     weighted_temp_rise = np.dot(solution, dataPerf['Implied Temperature Rise [Â°C]'])
     
-    # Pénalité pour la contrainte de température
     if weighted_temp_rise > 2:
-        return -np.inf  # Pénalité sévère si la contrainte est violée
+        return -np.inf 
     
     # Contrainte 1 : Aucun actif ne doit dépasser 10%
     penalite1 = sum((w - 0.10) ** 2 for w in solution if w > 0.10)
@@ -46,47 +45,43 @@ def fitness(solution):
     somme_superieur_5 = sum(w for w in solution if w > 0.05)
     penalite2 = (somme_superieur_5 - 0.40) ** 2 if somme_superieur_5 > 0.40 else 0
     
-    # Pénalité pour la somme des poids différente de 1 (normalisation implicite)
+    # La somme des poids doit être inférieur à 1
     penalite3 = (np.sum(solution) - 1) ** 2
 
-    # Fonction de fitness combinant rendement, Sharpe, et pénalités
     fitness_value = portfolio_return + portfolio_sharpe - (penalite1 + penalite2 + penalite3)
     return fitness_value
 
-# Sélection des meilleurs parents
 def select_parents(population, fitness_vals):
-    num_parents = sol_per_pop // 2  # Nombre de parents à sélectionner
+    num_parents = sol_per_pop // 2 
     parents = np.zeros((num_parents, num_assets))
 
-    # Trier les fitness (les meilleurs d'abord)
-    sorted_idx = np.argsort(fitness_vals)[::-1]  # Ordre décroissant
+    sorted_idx = np.argsort(fitness_vals)[::-1]
     for i in range(num_parents):
         parents[i] = population[sorted_idx[i]]
 
     return parents
 
-# Initialisation de la population
 def initialize_population():
     return np.random.dirichlet(np.ones(num_assets), size=sol_per_pop)
 
-# Mutation avec normalisation
+# Mutation
 def mutate(offspring):
     for i in range(offspring.shape[0]):
         if np.random.rand() < mutation_rate:
             mutated_solution = offspring[i] + np.random.normal(0, 0.05, size=num_assets)
             mutated_solution = np.clip(mutated_solution, 0, 1)
-            mutated_solution /= np.sum(mutated_solution)  # Normalisation explicite
+            mutated_solution /= np.sum(mutated_solution)
             offspring[i] = mutated_solution
     return offspring
 
-# Croisement (crossover) avec normalisation
+# Croisement 
 def crossover(parents):
     offspring = []
     for _ in range(sol_per_pop - parents.shape[0]):
         parent1, parent2 = parents[np.random.choice(parents.shape[0], 2, replace=False)]
         crossover_point = np.random.randint(1, num_assets)
         child = np.concatenate((parent1[:crossover_point], parent2[crossover_point:]))
-        child /= np.sum(child)  # Normalisation explicite
+        child /= np.sum(child)
         offspring.append(child)
     return np.array(offspring)
 
@@ -97,23 +92,23 @@ def genetic_algorithm():
     best_fitness = -np.inf
     
     for generation in range(num_generations):
-        # Calculer la fitness de la population
+        # Calcul de la fitness
         fitness_vals = np.array([fitness(sol) for sol in population])
         
-        # Sélectionner les meilleurs parents
+        # Meilleurs parents
         parents = select_parents(population, fitness_vals)
         
-        # Créer de la descendance par croisement
+        # Descendance
         offspring = crossover(parents)
         
-        # Appliquer la mutation
+        # Mutation
         offspring = mutate(offspring)
         
         # Nouvelle génération
         population[:parents.shape[0]] = parents
         population[parents.shape[0]:] = offspring
         
-        # Trouver la meilleure solution de cette génération
+        # Meilleures solution par génération
         best_gen_solution = population[np.argmax(fitness_vals)]
         best_gen_fitness = np.max(fitness_vals)
         
@@ -121,15 +116,12 @@ def genetic_algorithm():
             best_solution = best_gen_solution
             best_fitness = best_gen_fitness
         
-        # Affichage des informations de la génération
         print(f"Generation {generation + 1} - Meilleure Fitness : {best_fitness}")
     
     return best_solution, best_fitness
 
-# Exécution de l'algorithme génétique
 best_solution, best_fitness = genetic_algorithm()
 
-# Affichage du meilleur portefeuille
 print("\nMeilleur portefeuille trouvé :")
 stratégie_1 = pd.DataFrame({
     'Security ISIN': dataPerf['Security ISIN'],
@@ -138,7 +130,6 @@ stratégie_1 = pd.DataFrame({
 
 print(stratégie_1) 
 
-# Calculer les métriques pour le meilleur portefeuille
 optimal_return = np.dot(best_solution, dataPerf['Return_1Y'])
 optimal_sharpe = np.dot(best_solution, dataPerf['Sharpe_1Y'])
 optimal_temp_rise = np.dot(best_solution, dataPerf['Implied Temperature Rise [Â°C]'])
@@ -194,6 +185,7 @@ stratégie_1 = stratégie_1.rename(columns={'GICS Sector': 'Secteur'})
 stratégie_1 = stratégie_1.rename(columns={'Security ISIN': 'ISIN'})
 stratégie_1 = stratégie_1.rename(columns={'Aggregated Security Climate VaR [%]': 'Climate_VaR'})
 
+# Export vers la base de données
 nom_table = 'stratégie_1'
 stratégie_1.to_sql(nom_table, con=connection_string, if_exists='replace', index=False)
 
