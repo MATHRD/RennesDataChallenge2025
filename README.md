@@ -52,7 +52,7 @@ Critères d'investissement à la transition:
 
 En dernier lieu, grâce aux données disponibles, nous avons simuler des catastrohes naturelles sur nos différents portefeuilles afin de mesurer la perte monétaire et la variation de la VaR si des catastrophes tel que des inondations, séchesseress ou incendies affectait des entreprises de notre portefeuille.
 
-Notre projet détaillé se trouve dans le pdf 
+Notre projet détaillé se trouve dans le pdf :
 - [Rapport](https://github.com/MATHRD/RennesDataChallenge2025/blob/main/Rapport.pdf)
 
 Notre rendu se fait avec un Grafana accesible çi-dessous:
