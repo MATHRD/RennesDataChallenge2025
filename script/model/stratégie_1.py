@@ -19,8 +19,8 @@ query = "SELECT * FROM initial_dataset"
 initial_dataset = pd.read_sql(query, engine)
 
 # Sélection des critères à maximiser/minimiser
-dataPerf= initial_dataset[['Security ISIN' , 'Implied Temperature Rise [Â°C]','Return_1Y', 'Sharpe_1Y']]
-dataPerf['Implied Temperature Rise [Â°C]']=dataPerf['Implied Temperature Rise [Â°C]'].fillna(2)
+dataPerf= initial_dataset[['Security ISIN', 'Implied Temperature Rise [Â°C]','Return_1Y', 'Sharpe_1Y']]
+dataPerf['Implied Temperature Rise [Â°C]'] = dataPerf['Implied Temperature Rise [Â°C]'].fillna(2)
 
 # Paramètres 
 num_assets = len(dataPerf)  # Nbr d'actifs

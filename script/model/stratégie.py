@@ -14,7 +14,7 @@ connection_string = f"mysql+pymysql://{username}:{password}@{host}/{database}"
 engine = create_engine(connection_string)
 
 
-# Chargement des donnÃ©es
+# Chargement des données
 query = "SELECT * FROM stratégie_1"
 stratégie_1 = pd.read_sql(query, engine)
 
